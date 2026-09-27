@@ -131,6 +131,10 @@ def create_gauge(score, grade, color):
     )
     return fig
 
+# Initialize Uploader Key in Session State
+if "uploader_key" not in st.session_state:
+    st.session_state["uploader_key"] = 0
+
 # Sidebar
 with st.sidebar:
     st.image("https://upload.wikimedia.org/wikipedia/commons/5/51/IBM_logo.svg", width=85)
@@ -187,10 +191,20 @@ elif "Post-Bob Remediated" in input_source:
 
 elif "Upload Custom Project" in input_source:
     with st.container(border=True):
-        st.markdown("#### 📤 Upload Your Software Project")
-        st.write("Upload a `.zip` file of any software repository to run the full ShipSafe pre-release audit.")
-        
-        uploaded_file = st.file_uploader("Select or Drag & Drop Repository ZIP", type=["zip"], key="repo_uploader")
+        col_up_title, col_up_btn = st.columns([4, 1])
+        with col_up_title:
+            st.markdown("#### 📤 Upload Your Software Project")
+            st.write("Upload a `.zip` file of any software repository to run the full ShipSafe pre-release audit.")
+        with col_up_btn:
+            if st.button("🔄 Clear Upload", use_container_width=True):
+                st.session_state["uploader_key"] += 1
+                st.rerun()
+
+        uploaded_file = st.file_uploader(
+            "Select or Drag & Drop Repository ZIP", 
+            type=["zip"], 
+            key=f"repo_uploader_{st.session_state['uploader_key']}"
+        )
         
         if uploaded_file is not None:
             try:
