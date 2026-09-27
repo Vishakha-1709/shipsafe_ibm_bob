@@ -48,13 +48,6 @@ st.markdown("""
         margin-bottom: 1.5rem;
         line-height: 1.5;
     }
-    .metric-box {
-        background: #FFFFFF;
-        border: 1px solid #E2E8F0;
-        border-radius: 12px;
-        padding: 1.2rem;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.04);
-    }
     .severity-badge-critical {
         background-color: #FEE2E2;
         color: #991B1B;
@@ -100,10 +93,14 @@ st.markdown("""
         font-weight: 700;
         letter-spacing: 0.02em;
     }
-    .status-card {
-        border-radius: 10px;
-        padding: 14px;
-        margin-bottom: 12px;
+    .risk-callout {
+        background-color: #FFF7ED;
+        border-left: 4px solid #F97316;
+        padding: 10px 14px;
+        border-radius: 0 8px 8px 0;
+        margin-top: 8px;
+        font-size: 0.9rem;
+        color: #7C2D12;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -299,7 +296,7 @@ with tab_checklist:
     st.markdown("All items ordered by severity and score impact.")
     
     if not score_data['checklist']:
-        st.success("🎉 **Zero release blockers detected! This repository is ready for immediate deployment.**")
+        st.success("🎉 **Zero release blockers detected! This repository is 100% ready for immediate production deployment.**")
     else:
         for idx, item in enumerate(score_data['checklist'], start=1):
             sev_class = f"severity-badge-{item['priority'].lower()}"
@@ -308,7 +305,7 @@ with tab_checklist:
                 c_a, c_b = st.columns([3, 1])
                 with c_a:
                     st.markdown(f"**Category:** `{item['category']}`")
-                    st.markdown(f"**Reason:** {item['reason']}")
+                    st.markdown(f"**Why this matters:** {item['reason']}")
                 with c_b:
                     st.markdown(f'<span class="{sev_class}">{item["priority"]} Priority</span>', unsafe_allow_html=True)
                     st.markdown(f"**Score Impact:** `{item['impact']}`")
@@ -317,13 +314,22 @@ with tab_checklist:
     if secret_findings:
         st.markdown("---")
         st.markdown("### 🚨 Detected Secrets & Credential Exposure")
+        
+        st.markdown("""
+        <div class="risk-callout">
+            <strong>⚠️ Security Warning:</strong> Hardcoded credentials in source control can be extracted by anyone with read access. 
+            Migrate these credentials immediately to secure environment variables or a key vault before merging.
+        </div>
+        """, unsafe_allow_html=True)
+        st.write("")
+        
         sec_rows = []
         for s in secret_findings:
             sec_rows.append({
                 "Severity": s["severity"],
-                "Type": s["type"],
+                "Credential Type": s["type"],
                 "File Location": f"{s['file']}:{s['line']}",
-                "Masked Preview": s["masked_value"]
+                "Masked Value": s["masked_value"]
             })
         st.table(sec_rows)
 

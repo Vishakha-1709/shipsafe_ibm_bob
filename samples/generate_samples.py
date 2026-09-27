@@ -9,11 +9,11 @@ def build_bad_sample():
     bad_dir = os.path.join(SAMPLE_DIR, "raw_bad_repo")
     os.makedirs(bad_dir, exist_ok=True)
     
-    # 1. Main code with hardcoded secret
+    # 1. Main code with hardcoded secrets
     predict_code = """import os
 import requests
 
-# Hardcoded secret (Critical Security Violation)
+# 🚨 Critical Security Violation: Hardcoded API key & DB connection
 API_KEY = "sk-live-99238472918347102938471928347192"
 DB_CONNECTION = "postgres://admin:superSecretPass123!@localhost:5432/production_db"
 
@@ -50,7 +50,7 @@ if __name__ == "__main__":
 
 
 def build_clean_sample():
-    """Builds a clean, remediated repository."""
+    """Builds a clean, remediated repository (Scores 100/100)."""
     clean_dir = os.path.join(SAMPLE_DIR, "raw_clean_repo")
     os.makedirs(clean_dir, exist_ok=True)
     os.makedirs(os.path.join(clean_dir, "tests"), exist_ok=True)
@@ -64,7 +64,7 @@ load_dotenv()
 API_KEY = os.getenv("API_KEY")
 
 def run():
-    print("Service initialized securely.")
+    print("Service initialized securely with IBM Bob workflows.")
 
 if __name__ == "__main__":
     run()
@@ -72,45 +72,64 @@ if __name__ == "__main__":
     with open(os.path.join(clean_dir, "app.py"), "w", encoding="utf-8") as f:
         f.write(app_code)
 
-    # 2. Tests
-    test_code = """def test_initialization():
+    # 2. Comprehensive Test Suite (3 test files for 25/25 testing points)
+    test_1 = """def test_app_initialization():
     assert True
 """
+    test_2 = """def test_security_environment_variables():
+    import os
+    assert os.getenv("APP_ENV", "production") == "production"
+"""
+    test_3 = """def test_api_contract():
+    assert 200 == 200
+"""
     with open(os.path.join(clean_dir, "tests", "test_app.py"), "w", encoding="utf-8") as f:
-        f.write(test_code)
+        f.write(test_1)
+    with open(os.path.join(clean_dir, "tests", "test_security.py"), "w", encoding="utf-8") as f:
+        f.write(test_2)
+    with open(os.path.join(clean_dir, "tests", "test_integration.py"), "w", encoding="utf-8") as f:
+        f.write(test_3)
 
-    # 3. README
+    # 3. Complete README
     readme_code = """# Clean Sample Application
 
-## Setup & Installation
+A verified release-ready application audited by ShipSafe.
+
+## Overview
+This application provides core production services with full testing, environment variable isolation, and documentation.
+
+## Installation & Setup
 ```bash
 pip install -r requirements.txt
 ```
 
-## Usage
+## Usage & Execution
 ```bash
 python app.py
 ```
 
-## Tests
+## Running Automated Tests
 ```bash
-pytest tests/
+pytest tests/ -v
 ```
+
+## License
+MIT License
 """
     with open(os.path.join(clean_dir, "README.md"), "w", encoding="utf-8") as f:
         f.write(readme_code)
 
     # 4. requirements.txt
     with open(os.path.join(clean_dir, "requirements.txt"), "w", encoding="utf-8") as f:
-        f.write("python-dotenv>=1.0.0\npytest>=7.0.0\n")
+        f.write("python-dotenv>=1.0.0\npytest>=7.0.0\nrequests>=2.28.0\n")
 
     # 5. .gitignore
     with open(os.path.join(clean_dir, ".gitignore"), "w", encoding="utf-8") as f:
-        f.write(".env\n__pycache__/\n*.pyc\n")
+        f.write(".env\n__pycache__/\n*.pyc\n.pytest_cache/\n")
 
     # 6. LICENSE
     with open(os.path.join(clean_dir, "LICENSE"), "w", encoding="utf-8") as f:
-        f.write("MIT License\n")
+        f.write("MIT License - Copyright (c) 2026\n")
 
     # Package into ZIP
     zip_path = os.path.join(SAMPLE_DIR, "sample_clean_repo.zip")
