@@ -1,19 +1,26 @@
 import os
 import zipfile
 import tempfile
+import io
 from typing import Dict, List, Any, Tuple
 
 IGNORE_DIRS = {'.git', '__pycache__', '.pytest_cache', 'node_modules', '.venv', 'venv', '.idea', '.vscode', 'dist', 'build'}
 TEXT_EXTENSIONS = {'.py', '.js', '.ts', '.jsx', '.tsx', '.json', '.yaml', '.yml', '.toml', '.md', '.txt', '.html', '.css', '.sh', '.env', '.ini', '.cfg', '.xml', '.sql', '.go', '.rs', '.java', '.c', '.cpp', '.h'}
 
-def extract_zip(zip_file_bytes) -> str:
-    """Extract uploaded zip to a temporary directory safely and return path."""
+def extract_zip(zip_source) -> str:
+    """Extract uploaded zip (BytesIO, UploadedFile, or bytes) to a temporary directory safely and return path."""
     temp_dir = tempfile.mkdtemp(prefix="shipsafe_repo_")
-    with tempfile.NamedTemporaryFile(delete=False, suffix=".zip") as tmp:
-        tmp.write(zip_file_bytes.getvalue())
-        tmp_path = tmp.name
     
-    with zipfile.ZipFile(tmp_path, 'r') as zip_ref:
+    if hasattr(zip_source, "getvalue"):
+        file_bytes = zip_source.getvalue()
+    elif hasattr(zip_source, "read"):
+        file_bytes = zip_source.read()
+    elif isinstance(zip_source, bytes):
+        file_bytes = zip_source
+    else:
+        raise ValueError("Unsupported zip file input type.")
+    
+    with zipfile.ZipFile(io.BytesIO(file_bytes), 'r') as zip_ref:
         # Prevent Zip Slip vulnerability
         for member in zip_ref.infolist():
             target_path = os.path.abspath(os.path.join(temp_dir, member.filename))
@@ -21,7 +28,13 @@ def extract_zip(zip_file_bytes) -> str:
                 raise Exception("Potential Zip Slip vulnerability detected.")
         zip_ref.extractall(temp_dir)
         
-    os.unlink(tmp_path)
+    # Auto-unwrap single root folder (e.g. GitHub 'repo-main/' download format)
+    extracted_items = [item for item in os.listdir(temp_dir) if not item.startswith('.')]
+    if len(extracted_items) == 1:
+        single_sub = os.path.join(temp_dir, extracted_items[0])
+        if os.path.isdir(single_sub):
+            return single_sub
+
     return temp_dir
 
 def scan_repository(repo_path: str) -> Dict[str, Any]:

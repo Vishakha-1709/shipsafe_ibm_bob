@@ -155,10 +155,6 @@ with st.sidebar:
             "📤 Upload Custom Project (ZIP)"
         ]
     )
-    
-    uploaded_file = None
-    if "Upload Custom Project" in input_source:
-        uploaded_file = st.file_uploader("Upload repository ZIP archive", type=["zip"])
 
     st.markdown("---")
     st.markdown("### 💡 Why ShipSafe?")
@@ -176,7 +172,7 @@ with st.sidebar:
 st.markdown('<div class="main-header">ShipSafe <span class="bob-tag">IBM Bob Partner</span></div>', unsafe_allow_html=True)
 st.markdown('<div class="sub-header">Automated pre-release gatekeeper. Detect gaps, sanitize secrets, and generate production release artifacts in seconds.</div>', unsafe_allow_html=True)
 
-# Process Sample or Uploaded Target
+# Target resolution
 sample_dir = os.path.join(os.path.dirname(__file__), "samples")
 target_repo_path = None
 
@@ -196,11 +192,26 @@ elif "Post-Bob Remediated" in input_source:
     with open(clean_zip_path, "rb") as f:
         target_repo_path = extract_zip(io.BytesIO(f.read()))
 
-elif uploaded_file is not None:
-    target_repo_path = extract_zip(uploaded_file)
+elif "Upload Custom Project" in input_source:
+    with st.container(border=True):
+        st.markdown("#### 📤 Upload Your Software Project")
+        st.write("Upload a `.zip` file of any software repository (e.g. exported from GitHub or your local folder) to run the full ShipSafe pre-release audit.")
+        
+        uploaded_file = st.file_uploader("Select or Drag & Drop Repository ZIP", type=["zip"], key="repo_uploader")
+        
+        if uploaded_file is not None:
+            try:
+                with st.spinner("Extracting and inspecting repository..."):
+                    target_repo_path = extract_zip(uploaded_file)
+                st.success(f"✅ Successfully loaded `{uploaded_file.name}` ({round(uploaded_file.size / (1024*1024), 2)} MB)")
+            except Exception as e:
+                st.error(f"❌ Error processing zip file: {e}")
+                st.stop()
+        else:
+            st.info("👆 Please drag and drop or browse for a `.zip` repository file above to begin the audit.")
+            st.stop()
 
 if not target_repo_path:
-    st.info("👈 Please upload a repository ZIP file or choose a Quick Demo scenario from the sidebar to run ShipSafe.")
     st.stop()
 
 # Perform Fast Analysis
