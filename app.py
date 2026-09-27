@@ -8,13 +8,6 @@ import plotly.graph_objects as go
 from analyzer.scanner import extract_zip, scan_repository
 from analyzer.security import scan_for_secrets
 from analyzer.scoring import calculate_release_readiness
-from analyzer.remediation import (
-    generate_readme_template, 
-    generate_test_template, 
-    generate_env_refactor_snippet, 
-    generate_gitignore_template
-)
-from analyzer.exporter import generate_release_notes, generate_release_checklist_md
 
 st.set_page_config(
     page_title="ShipSafe | AI Release-Readiness Assistant",
@@ -162,15 +155,15 @@ with st.sidebar:
     * **Automated Structure Audit**
     * **Secret & Credentials Hunter**
     * **Test & Docs Gap Detector**
-    * **Instant Fix Stubs Generation**
-    * **One-Click Release Notes**
+    * **4-Pillar Release Readiness Score**
+    * **Actionable PR Checklist**
     """)
     st.markdown("---")
     st.caption("IBM Bob Hackathon 2.0 • Turn Idea into Impact Faster")
 
 # Main Header
 st.markdown('<div class="main-header">ShipSafe <span class="bob-tag">IBM Bob Partner</span></div>', unsafe_allow_html=True)
-st.markdown('<div class="sub-header">Automated pre-release gatekeeper. Detect gaps, sanitize secrets, and generate production release artifacts in seconds.</div>', unsafe_allow_html=True)
+st.markdown('<div class="sub-header">Automated pre-release gatekeeper. Detect gaps, sanitize secrets, and verify release readiness in seconds.</div>', unsafe_allow_html=True)
 
 # Target resolution
 sample_dir = os.path.join(os.path.dirname(__file__), "samples")
@@ -195,7 +188,7 @@ elif "Post-Bob Remediated" in input_source:
 elif "Upload Custom Project" in input_source:
     with st.container(border=True):
         st.markdown("#### 📤 Upload Your Software Project")
-        st.write("Upload a `.zip` file of any software repository (e.g. exported from GitHub or your local folder) to run the full ShipSafe pre-release audit.")
+        st.write("Upload a `.zip` file of any software repository to run the full ShipSafe pre-release audit.")
         
         uploaded_file = st.file_uploader("Select or Drag & Drop Repository ZIP", type=["zip"], key="repo_uploader")
         
@@ -250,13 +243,11 @@ with m4:
 
 st.write("")
 
-# Navigation Tabs
-tab_overview, tab_checklist, tab_remediation, tab_bob_evidence, tab_export = st.tabs([
+# Navigation Tabs - Streamlined to Core Focus
+tab_overview, tab_checklist, tab_bob_evidence = st.tabs([
     "📊 Readiness Dashboard",
     "⚠️ Prioritized Action Checklist",
-    "🛠️ AI Fix Stubs & Remediation",
-    "🤖 Before vs After Bob Evidence",
-    "📑 Export Release Gate Artifacts"
+    "🤖 Before vs After Bob Evidence"
 ])
 
 # ----------------- TAB 1: DASHBOARD -----------------
@@ -345,46 +336,7 @@ with tab_checklist:
         st.table(sec_rows)
 
 
-# ----------------- TAB 3: AI FIX STUBS -----------------
-with tab_remediation:
-    st.markdown("### 🛠️ One-Click Fix Snippets & Boilerplates")
-    st.caption("ShipSafe generates drop-in boilerplate to resolve identified gaps immediately.")
-    
-    tab_f1, tab_f2, tab_f3, tab_f4 = st.tabs(["📄 README.md Generator", "🧪 Test Suite Stub", "🔒 Env Refactoring", "🛡️ .gitignore Template"])
-    
-    with tab_f1:
-        st.markdown("**Generated Standard README.md**")
-        readme_code = generate_readme_template(
-            project_name="ShipSafe Inspected Project",
-            languages=list(scan_data["languages"].keys()),
-            entry_points=scan_data["entry_points"]
-        )
-        st.code(readme_code, language="markdown")
-        st.download_button("📥 Download README.md", readme_code, file_name="README.md", mime="text/markdown")
-
-    with tab_f2:
-        st.markdown("**Generated Unit Test Scaffold (`tests/test_core.py`)**")
-        test_code = generate_test_template()
-        st.code(test_code, language="python")
-        st.download_button("📥 Download test_core.py", test_code, file_name="test_core.py", mime="text/x-python")
-
-    with tab_f3:
-        st.markdown("**Hardcoded Secrets $\\to$ Environment Variable Refactor Helper**")
-        if secret_findings:
-            first_sec = secret_findings[0]
-            env_code = generate_env_refactor_snippet("API_KEY", first_sec["masked_value"])
-        else:
-            env_code = generate_env_refactor_snippet("API_KEY", "your_secret_here")
-        st.code(env_code, language="python")
-
-    with tab_f4:
-        st.markdown("**Standard `.gitignore` File**")
-        gi_code = generate_gitignore_template()
-        st.code(gi_code, language="text")
-        st.download_button("📥 Download .gitignore", gi_code, file_name=".gitignore", mime="text/plain")
-
-
-# ----------------- TAB 4: BEFORE VS AFTER BOB -----------------
+# ----------------- TAB 3: BEFORE VS AFTER BOB -----------------
 with tab_bob_evidence:
     st.markdown("### 🤖 Before vs. After IBM Bob Workflow Evidence")
     st.markdown("Demonstrating how IBM Bob accelerates developer productivity across release cycles.")
@@ -408,7 +360,7 @@ with tab_bob_evidence:
             * **Instant Structure Synthesis:** Automated scan delivers complete repository anatomy in `<2 seconds`.
             * **Pre-emptive Gap Detection:** Test gaps & missing dependencies are flagged before opening PR.
             * **Early Secret Interception:** Regex security hunter intercepts API keys before git commit.
-            * **One-Click Release Packaging:** Generates markdown `RELEASE_NOTES.md` and PR checklists automatically.
+            * **One-Click Release Assessment:** Generates comprehensive readiness checklist automatically.
             * **Average Turnaround:** `<1 minute per release (98% time reduction)`
             """)
 
@@ -416,42 +368,11 @@ with tab_bob_evidence:
     with st.container(border=True):
         st.markdown("#### 🔬 How IBM Bob was used as our Core Development Partner:")
         st.markdown("""
-        1. **Architecture & Design:** IBM Bob planned the modular separation of the scanner, scoring engine, and remediation generators.
+        1. **Architecture & Design:** IBM Bob planned the modular separation of the scanner, scoring engine, and audit pipeline.
         2. **Implementation:** IBM Bob wrote deterministic Python AST/regex inspectors to avoid unreliable network LLM dependencies during live deployment.
         3. **Test Suite Generation:** Bob scaffolded unit tests for secret matching and readiness thresholds.
         4. **Code Review & Hardening:** Bob performed security audits, enforcing Zip Slip protection and memory safety.
         """)
-
-
-# ----------------- TAB 5: EXPORT ARTIFACTS -----------------
-with tab_export:
-    st.markdown("### 📑 Export Production Release Artifacts")
-    st.caption("Generate signed release notes and Pull Request sign-off checklists for your repository.")
-    
-    ver_input = st.text_input("Release Version Tag", value="v1.0.0")
-    
-    rel_notes_md = generate_release_notes(scan_data, score_data, version=ver_input)
-    rel_checklist_md = generate_release_checklist_md(scan_data, score_data)
-    
-    col_n1, col_n2 = st.columns(2)
-    with col_n1:
-        st.markdown("#### 📝 `RELEASE_NOTES.md`")
-        st.text_area("Preview", rel_notes_md, height=260)
-        st.download_button(
-            "📥 Download RELEASE_NOTES.md",
-            rel_notes_md,
-            file_name="RELEASE_NOTES.md",
-            mime="text/markdown"
-        )
-    with col_n2:
-        st.markdown("#### 🛡️ `RELEASE_CHECKLIST.md`")
-        st.text_area("Preview", rel_checklist_md, height=260)
-        st.download_button(
-            "📥 Download RELEASE_CHECKLIST.md",
-            rel_checklist_md,
-            file_name="RELEASE_CHECKLIST.md",
-            mime="text/markdown"
-        )
 
 # Footer Limitation Notice
 st.markdown("---")
