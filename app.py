@@ -16,13 +16,38 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Custom Styling
+# Custom Styling & Fix for Streamlit File Uploader Hover Tooltip
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
     
     html, body, [class*="css"] {
         font-family: 'Inter', sans-serif;
+    }
+    
+    /* Fix file uploader tooltip overlay blocking the delete (X) button */
+    [data-testid="stFileUploadDropzone"] {
+        padding: 1.5rem !important;
+        border: 2px dashed #0F62FE !important;
+        background-color: #F8FAFC !important;
+        border-radius: 12px !important;
+    }
+    
+    [data-testid="stFileUploaderDeleteBtn"] {
+        z-index: 99999 !important;
+        position: relative !important;
+        cursor: pointer !important;
+        display: block !important;
+    }
+
+    [data-testid="stFileUploaderPagination"] {
+        z-index: 1 !important;
+    }
+
+    /* Hide distracting hover tooltip overlay that blocks clicking */
+    div[data-baseweb="tooltip"] {
+        pointer-events: none !important;
+        display: none !important;
     }
     
     .main-header {
@@ -191,12 +216,12 @@ elif "Post-Bob Remediated" in input_source:
 
 elif "Upload Custom Project" in input_source:
     with st.container(border=True):
-        col_up_title, col_up_btn = st.columns([4, 1])
+        col_up_title, col_up_btn = st.columns([3.5, 1.5])
         with col_up_title:
             st.markdown("#### 📤 Upload Your Software Project")
             st.write("Upload a `.zip` file of any software repository to run the full ShipSafe pre-release audit.")
         with col_up_btn:
-            if st.button("🔄 Clear Upload", use_container_width=True):
+            if st.button("🗑️ Remove / Clear File", use_container_width=True, type="secondary"):
                 st.session_state["uploader_key"] += 1
                 st.rerun()
 
@@ -210,7 +235,7 @@ elif "Upload Custom Project" in input_source:
             try:
                 with st.spinner("Extracting and inspecting repository..."):
                     target_repo_path = extract_zip(uploaded_file)
-                st.success(f"✅ Successfully loaded `{uploaded_file.name}` ({round(uploaded_file.size / (1024*1024), 2)} MB)")
+                st.success(f"✅ Loaded `{uploaded_file.name}` ({round(uploaded_file.size / (1024*1024), 2)} MB)")
             except Exception as e:
                 st.error(f"❌ Error processing zip file: {e}")
                 st.stop()
